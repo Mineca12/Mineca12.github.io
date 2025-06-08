@@ -5,12 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MovieFlix Archive</title>
     
+    <!-- We'll use Tailwind CSS for styling. It's a modern way to make sites look great without writing a lot of CSS. -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- Google Fonts for a nice, clean look -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Firebase SDK (Software Development Kit) - This is what lets our website talk to the database -->
     <script type="module">
         // IMPORTANT: These are the core Firebase libraries we need.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -22,8 +25,6 @@
         // You will get this from the Firebase console (I'll explain how).
         // The __firebase_config variable will be automatically provided in the environment.
         const firebaseConfig =  typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
-            // This is a fallback for local testing. If your button is unclickable,
-            // it's likely the __firebase_config is not being set correctly.
             apiKey: "YOUR_API_KEY",
             authDomain: "YOUR_AUTH_DOMAIN",
             projectId: "YOUR_PROJECT_ID",
@@ -44,12 +45,8 @@
         // We sign users in anonymously so they can submit movies.
         // The __initial_auth_token is provided by the environment.
         try {
-            const authErrorDiv = document.getElementById('authError');
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                  await signInWithCustomToken(auth, __initial_auth_token);
-            } else if (firebaseConfig.apiKey === "YOUR_API_KEY") {
-                // If the config is still the default placeholder, show an error.
-                throw new Error("Firebase is not configured.");
             } else {
                  await signInAnonymously(auth);
             }
@@ -57,18 +54,12 @@
             console.error("Authentication Error:", error);
             // Show an error message to the user on the page
             const authErrorDiv = document.getElementById('authError');
-            if(authErrorDiv) {
-                authErrorDiv.innerText = "Error: Could not connect to the database. Please verify your Firebase project is set up correctly.";
-                authErrorDiv.classList.remove('hidden');
-            }
+            if(authErrorDiv) authErrorDiv.classList.remove('hidden');
         }
 
         // --- APPLICATION LOGIC ---
         // This function runs when the page is fully loaded.
         document.addEventListener('DOMContentLoaded', () => {
-            // *** DEBUG TEST ***: If you see this message, the script is running!
-            alert("Website script is running!");
-
             const movieGrid = document.getElementById('movieGrid');
             const searchBar = document.getElementById('searchBar');
             const uploadButton = document.getElementById('uploadButton');
@@ -95,9 +86,11 @@
                 renderMovies(allMovies); // Redraw the movie grid
             }, (error) => {
                 console.error("Error fetching movies: ", error);
+                // You can show an error message on the page here
             });
             
             // --- RENDER MOVIES ---
+            // This function takes an array of movie objects and creates the HTML for them.
             function renderMovies(movies) {
                 movieGrid.innerHTML = ''; // Clear the grid before adding new items
                 if (movies.length === 0) {
@@ -107,6 +100,8 @@
                         const movieTile = document.createElement('div');
                         movieTile.className = 'movie-tile bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
                         movieTile.dataset.title = movie.title;
+                        
+                        // When a tile is clicked, we'll get its details from the `allMovies` array
                         movieTile.onclick = () => showDetailModal(movie);
 
                         movieTile.innerHTML = `
@@ -127,7 +122,7 @@
                 renderMovies(filteredMovies);
             });
 
-            // --- MODAL CONTROLS ---
+            // --- MODAL CONTROLS (for Upload and Details) ---
             uploadButton.addEventListener('click', () => uploadModal.classList.remove('hidden'));
             closeUploadModalButton.addEventListener('click', () => uploadModal.classList.add('hidden'));
             closeDetailModalButton.addEventListener('click', () => detailModal.classList.add('hidden'));
@@ -136,9 +131,10 @@
                  if (event.target === detailModal) detailModal.classList.add('hidden');
             });
 
+
             // --- UPLOAD FORM SUBMISSION ---
             uploadForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
+                e.preventDefault(); // Prevents the page from reloading
                 const submitBtn = uploadForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
@@ -150,16 +146,17 @@
                 const description = uploadForm.description.value;
 
                 try {
+                    // Add a new document with a generated ID to the 'movies' collection.
                     await addDoc(moviesCollectionRef, {
                         title: title,
                         posterUrl: posterUrl,
                         downloadUrl: downloadUrl,
                         description: description,
-                        submittedAt: new Date()
+                        submittedAt: new Date() // Timestamp for sorting later if needed
                     });
                     
-                    uploadForm.reset();
-                    uploadModal.classList.add('hidden');
+                    uploadForm.reset(); // Clear the form
+                    uploadModal.classList.add('hidden'); // Hide the modal
                     
                 } catch (error) {
                     console.error("Error adding document: ", error);
@@ -170,34 +167,58 @@
                 }
             });
 
-            // --- SHOW MOVIE DETAILS ---
+             // --- SHOW MOVIE DETAILS ---
             function showDetailModal(movie) {
+                // Populate the modal with the movie's data
                 document.getElementById('detailTitle').innerText = movie.title;
                 document.getElementById('detailPoster').src = movie.posterUrl;
                 document.getElementById('detailPoster').alt = movie.title;
                 document.getElementById('detailDescription').innerText = movie.description || "No description provided.";
                 document.getElementById('detailDownloadBtn').onclick = () => window.open(movie.downloadUrl, '_blank');
                 
+                // Show the modal
                 detailModal.classList.remove('hidden');
             }
         });
     </script>
     
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .ad-zone { display: flex; align-items: center; justify-content: center; background-color: #374151; border: 2px dashed #6b7280; border-radius: 0.5rem; color: #9ca3af; font-size: 0.875rem; font-weight: 500; text-align: center; min-height: 90px; }
+        /* A simple style for our main font */
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Style for the ad placeholders to match your sketch */
+        .ad-zone {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: #374151; /* bg-gray-700 */
+            border: 2px dashed #6b7280; /* border-gray-500 */
+            border-radius: 0.5rem; /* rounded-lg */
+            color: #9ca3af; /* text-gray-400 */
+            font-size: 0.875rem; /* text-sm */
+            font-weight: 500;
+            text-align: center;
+            min-height: 90px;
+        }
     </style>
 </head>
 
 <body class="bg-gray-900 text-gray-200">
+
+    <!-- Main Container -->
     <div class="container mx-auto px-4 py-8">
+
+        <!-- Header: Title and Buttons -->
         <header class="text-center mb-8">
             <h1 class="text-4xl md:text-5xl font-bold text-white mb-4">MovieFlix Archive</h1>
             <p class="text-gray-400">Your community-built movie library.</p>
             <div id="authError" class="hidden mt-4 p-3 bg-red-800 text-white rounded-lg">
-                </div>
+                Could not connect to the database. Please check your Firebase setup.
+            </div>
         </header>
 
+        <!-- Controls: Search and Upload -->
         <div class="flex flex-col md:flex-row gap-4 mb-8">
             <input id="searchBar" type="text" placeholder="Search for movies or shows..." class="flex-grow bg-gray-800 border-2 border-gray-700 rounded-lg px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
             <button id="uploadButton" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
@@ -205,18 +226,32 @@
             </button>
         </div>
         
-        <div class="ad-zone mb-8">AD SPACE 1</div>
+        <!-- Ad Placeholder 1 (like in your sketch) -->
+        <div class="ad-zone mb-8">
+            <!-- Your Ad Network code (e.g., PropellerAds, Adsterra) goes here -->
+            AD SPACE 1
+        </div>
+
+        <!-- Movie Grid -->
         <main>
-            <div id="movieGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6"></div>
+            <div id="movieGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
+                <!-- Movie tiles will be dynamically inserted here by JavaScript -->
+            </div>
         </main>
         
+        <!-- Footer with Legal Disclaimer -->
         <footer class="text-center text-gray-500 text-xs mt-12">
-            <div class="ad-zone my-8">AD SPACE 2</div>
-            <p class="mb-2"><strong>Disclaimer:</strong> This site is a user-submitted archive. We do not host any files on our server...</p>
+            <div class="ad-zone my-8">
+                <!-- Another Ad Zone -->
+                AD SPACE 2
+            </div>
+            <p class="mb-2"><strong>Disclaimer:</strong> This site is a user-submitted archive. We do not host any files on our server. All links are submitted by users. If you are a copyright owner and would like something removed, please contact us.</p>
             <p>&copy; 2025 MovieFlix Archive. All Rights Reserved.</p>
         </footer>
+
     </div>
 
+    <!-- Upload Modal -->
     <div id="uploadModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
         <div class="bg-gray-800 rounded-lg p-8 w-11/12 md:w-1/2 lg:w-1/3">
             <div class="flex justify-between items-center mb-6">
@@ -225,19 +260,19 @@
             </div>
             <form id="uploadForm">
                 <div class="mb-4">
-                    <label class="block text-gray-300 mb-2">Movie Title</label>
+                    <label for="title" class="block text-gray-300 mb-2">Movie Title</label>
                     <input type="text" name="title" required class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-300 mb-2">Poster Image URL</label>
+                    <label for="posterUrl" class="block text-gray-300 mb-2">Poster Image URL</label>
                     <input type="url" name="posterUrl" required class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 <div class="mb-4">
-                    <label class="block text-gray-300 mb-2">Download Link</label>
+                    <label for="downloadUrl" class="block text-gray-300 mb-2">Download Link</label>
                     <input type="url" name="downloadUrl" required class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                  <div class="mb-6">
-                    <label class="block text-gray-300 mb-2">Description</label>
+                    <label for="description" class="block text-gray-300 mb-2">Description</label>
                     <textarea name="description" rows="3" class="w-full bg-gray-700 border-2 border-gray-600 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
                 </div>
                 <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">Upload Movie</button>
@@ -245,6 +280,7 @@
         </div>
     </div>
     
+    <!-- Movie Detail Modal -->
     <div id="detailModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4">
         <div class="bg-gray-800 rounded-lg w-full max-w-2xl max-h-full overflow-y-auto">
              <div class="flex justify-end p-2">
@@ -252,10 +288,14 @@
             </div>
             <div class="p-4 md:p-8">
                 <div class="md:flex gap-8">
-                    <div class="md:w-1/3 mb-4 md:mb-0"><img id="detailPoster" src="" alt="" class="rounded-lg w-full shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1f2937/9ca3af?text=No+Image';"></div>
+                    <div class="md:w-1/3 mb-4 md:mb-0">
+                        <img id="detailPoster" src="" alt="" class="rounded-lg w-full shadow-lg" onerror="this.onerror=null;this.src='https://placehold.co/400x600/1f2937/9ca3af?text=No+Image';">
+                    </div>
                     <div class="md:w-2/3">
                         <h2 id="detailTitle" class="text-3xl font-bold text-white mb-4"></h2>
-                        <div class="ad-zone mb-4">AD SPACE IN MOVIE DETAILS</div>
+                        <div class="ad-zone mb-4">
+                           AD SPACE IN MOVIE DETAILS
+                        </div>
                         <p id="detailDescription" class="text-gray-300 mb-6"></p>
                         <button id="detailDownloadBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg text-lg transition-colors">Download</button>
                     </div>
@@ -263,5 +303,6 @@
             </div>
         </div>
     </div>
+
 </body>
 </html>
