@@ -17,10 +17,15 @@
         import { getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- FIREBASE CONFIGURATION ---
-        // This configuration object connects your website to your Firebase project.
-        // You will get this from the Firebase console (I'll explain how).
-        // The __firebase_config variable will be automatically provided in the environment.
+        const firebaseConfig = {
+  apiKey: "AIzaSyATPTB651jFvfSTe68K4UDMUwyOTNahgss",
+  authDomain: "mineca-cf514.firebaseapp.com",
+  projectId: "mineca-cf514",
+  storageBucket: "mineca-cf514.firebasestorage.app",
+  messagingSenderId: "955276895998",
+  appId: "1:955276895998:web:9f459b3c71935258bca7af"
+};
+        
         const firebaseConfig =  typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
             // This is a fallback for local testing. If your button is unclickable,
             // it's likely the __firebase_config is not being set correctly.
