@@ -12,14 +12,10 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <script type="module">
-        // IMPORTANT: These are the core Firebase libraries we need.
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, doc, getDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-        // --- FIREBASE CONFIGURATION ---
-        // This configuration object connects your website to your Firebase project.
-        // I have updated this with the configuration you provided.
         const firebaseConfig = {
           apiKey: "AIzaSyATPTB651jFvfSTe68K4UDMUwyOTNahgss",
           authDomain: "mineca-cf514.firebaseapp.com",
@@ -29,17 +25,12 @@
           appId: "1:955276895998:web:9f459b3c71935258bca7af"
         };
         
-        // This will show more detailed logs in the browser console for debugging.
         setLogLevel('debug');
 
-        // Initialize Firebase services
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
         const auth = getAuth(app);
         
-        // --- AUTHENTICATION ---
-        // We sign users in anonymously so they can submit movies.
-        // The __initial_auth_token is provided by the environment.
         try {
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                  await signInWithCustomToken(auth, __initial_auth_token);
@@ -48,13 +39,10 @@
             }
         } catch (error) {
             console.error("Authentication Error:", error);
-            // Show an error message to the user on the page
             const authErrorDiv = document.getElementById('authError');
             if(authErrorDiv) authErrorDiv.classList.remove('hidden');
         }
 
-        // --- APPLICATION LOGIC ---
-        // This function runs when the page is fully loaded.
         document.addEventListener('DOMContentLoaded', () => {
             const movieGrid = document.getElementById('movieGrid');
             const searchBar = document.getElementById('searchBar');
@@ -65,31 +53,23 @@
             const detailModal = document.getElementById('detailModal');
             const closeDetailModalButton = document.getElementById('closeDetailModal');
 
-            let allMovies = []; // This will store all movies from the database
+            let allMovies = []; 
 
-            // --- REAL-TIME DATA LISTENER ---
-            // This is the magic part! `onSnapshot` listens for any changes in our 'movies' collection.
-            // When a new movie is added, this code runs automatically and updates the page.
-            // The `appId` makes sure you are reading data for this specific app instance.
-            // Using the projectId from your firebaseConfig as the 'appId' for the collection path.
-            const appId = firebaseConfig.projectId; // Use your project ID for the path
+            const appId = firebaseConfig.projectId;
             const moviesCollectionRef = collection(db, `/artifacts/${appId}/public/data/movies`);
 
             onSnapshot(moviesCollectionRef, (snapshot) => {
-                allMovies = []; // Clear the current list
+                allMovies = []; 
                 snapshot.forEach(doc => {
                     allMovies.push({ id: doc.id, ...doc.data() });
                 });
-                renderMovies(allMovies); // Redraw the movie grid
+                renderMovies(allMovies);
             }, (error) => {
                 console.error("Error fetching movies: ", error);
-                // You can show an error message on the page here
             });
             
-            // --- RENDER MOVIES ---
-            // This function takes an array of movie objects and creates the HTML for them.
             function renderMovies(movies) {
-                movieGrid.innerHTML = ''; // Clear the grid before adding new items
+                movieGrid.innerHTML = '';
                 if (movies.length === 0) {
                      movieGrid.innerHTML = `<p class="text-gray-400 col-span-full text-center">No movies submitted yet. Be the first!</p>`;
                 } else {
@@ -98,7 +78,6 @@
                         movieTile.className = 'movie-tile bg-gray-800 rounded-lg overflow-hidden shadow-lg transform hover:-translate-y-1 transition-transform duration-300 cursor-pointer';
                         movieTile.dataset.title = movie.title;
                         
-                        // When a tile is clicked, we'll get its details from the `allMovies` array
                         movieTile.onclick = () => showDetailModal(movie);
 
                         movieTile.innerHTML = `
@@ -112,14 +91,12 @@
                 }
             }
 
-            // --- SEARCH FUNCTIONALITY ---
             searchBar.addEventListener('keyup', () => {
                 const searchTerm = searchBar.value.toLowerCase();
                 const filteredMovies = allMovies.filter(movie => movie.title.toLowerCase().includes(searchTerm));
                 renderMovies(filteredMovies);
             });
 
-            // --- MODAL CONTROLS (for Upload and Details) ---
             uploadButton.addEventListener('click', () => uploadModal.classList.remove('hidden'));
             closeUploadModalButton.addEventListener('click', () => uploadModal.classList.add('hidden'));
             closeDetailModalButton.addEventListener('click', () => detailModal.classList.add('hidden'));
@@ -128,10 +105,8 @@
                  if (event.target === detailModal) detailModal.classList.add('hidden');
             });
 
-
-            // --- UPLOAD FORM SUBMISSION ---
             uploadForm.addEventListener('submit', async (e) => {
-                e.preventDefault(); // Prevents the page from reloading
+                e.preventDefault();
                 const submitBtn = uploadForm.querySelector('button[type="submit"]');
                 const originalBtnText = submitBtn.innerHTML;
                 submitBtn.disabled = true;
@@ -143,17 +118,16 @@
                 const description = uploadForm.description.value;
 
                 try {
-                    // Add a new document with a generated ID to the 'movies' collection.
                     await addDoc(moviesCollectionRef, {
                         title: title,
                         posterUrl: posterUrl,
                         downloadUrl: downloadUrl,
                         description: description,
-                        submittedAt: new Date() // Timestamp for sorting later if needed
+                        submittedAt: new Date()
                     });
                     
-                    uploadForm.reset(); // Clear the form
-                    uploadModal.classList.add('hidden'); // Hide the modal
+                    uploadForm.reset();
+                    uploadModal.classList.add('hidden');
                     
                 } catch (error) {
                     console.error("Error adding document: ", error);
@@ -164,36 +138,31 @@
                 }
             });
 
-             // --- SHOW MOVIE DETAILS ---
             function showDetailModal(movie) {
-                // Populate the modal with the movie's data
                 document.getElementById('detailTitle').innerText = movie.title;
                 document.getElementById('detailPoster').src = movie.posterUrl;
                 document.getElementById('detailPoster').alt = movie.title;
                 document.getElementById('detailDescription').innerText = movie.description || "No description provided.";
                 document.getElementById('detailDownloadBtn').onclick = () => window.open(movie.downloadUrl, '_blank');
                 
-                // Show the modal
                 detailModal.classList.remove('hidden');
             }
         });
     </script>
     
     <style>
-        /* A simple style for our main font */
         body {
             font-family: 'Inter', sans-serif;
         }
-        /* Style for the ad placeholders to match your sketch */
         .ad-zone {
             display: flex;
             align-items: center;
             justify-content: center;
-            background-color: #374151; /* bg-gray-700 */
-            border: 2px dashed #6b7280; /* border-gray-500 */
-            border-radius: 0.5rem; /* rounded-lg */
-            color: #9ca3af; /* text-gray-400 */
-            font-size: 0.875rem; /* text-sm */
+            background-color: #374151;
+            border: 2px dashed #6b7280;
+            border-radius: 0.5rem;
+            color: #9ca3af;
+            font-size: 0.875rem;
             font-weight: 500;
             text-align: center;
             min-height: 90px;
@@ -226,7 +195,7 @@
 
         <main>
             <div id="movieGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-                </div>
+            </div>
         </main>
         
         <footer class="text-center text-gray-500 text-xs mt-12">
